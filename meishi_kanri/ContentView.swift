@@ -3,7 +3,7 @@ import UIKit
 import TOCropViewController
 
 struct ContentView: View {
-    @State private var selectedImages: [UIImage] = [] // 複数の画像を保持する配列
+    @State private var selectedImages: [(image: UIImage, annotation: String)] = [] // 画像と注釈を保持する配列
     @State private var showImagePicker: Bool = false
     @State private var isCamera: Bool = true // カメラのみ有効にする
     
@@ -16,8 +16,8 @@ struct ContentView: View {
                         ForEach(selectedImages.indices, id: \.self) { index in
                             VStack {
                                 // 画像タップで拡大表示
-                                NavigationLink(destination: ImageDetailView(image: selectedImages[index], index: index, selectedImages: $selectedImages)) {
-                                    Image(uiImage: selectedImages[index])
+                                NavigationLink(destination: ImageDetailView(imageData: $selectedImages[index], index: index)) {
+                                    Image(uiImage: selectedImages[index].image)
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 150, height: 150)
@@ -71,18 +71,38 @@ struct ContentView: View {
 }
 
 struct ImageDetailView: View {
-    var image: UIImage
+    @Binding var imageData: (image: UIImage, annotation: String)
     var index: Int
-    @Binding var selectedImages: [UIImage]
+    @State private var editedAnnotation: String
+    
+    init(imageData: Binding<(image: UIImage, annotation: String)>, index: Int) {
+        self._imageData = imageData
+        self.index = index
+        _editedAnnotation = State(initialValue: imageData.wrappedValue.annotation)
+    }
     
     var body: some View {
         VStack {
-            Image(uiImage: image)
+            Image(uiImage: imageData.image)
                 .resizable()
                 .scaledToFit()
                 .padding()
                 .navigationTitle("拡大画像")
                 .navigationBarTitleDisplayMode(.inline)
+            
+            // テキストフィールドで注釈を編集
+            TextField("注釈を入力", text: $editedAnnotation)
+                .padding()
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.horizontal)
+            
+            // 保存ボタン
+            Button("保存") {
+                // 入力した注釈を保存
+                imageData.annotation = editedAnnotation
+            }
+            .padding()
+            .foregroundColor(.blue)
             
             // 削除ボタン
             Button(action: {
@@ -103,7 +123,9 @@ struct ImageDetailView: View {
         alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel, handler: nil))
         alert.addAction(UIAlertAction(title: "削除", style: .destructive, handler: { _ in
             // 削除処理
-            selectedImages.remove(at: index)
+            if let rootVC = UIApplication.shared.windows.first?.rootViewController {
+                rootVC.present(alert, animated: true, completion: nil)
+            }
         }))
         
         // アラートを表示
@@ -114,7 +136,7 @@ struct ImageDetailView: View {
 }
 
 struct ImagePicker: UIViewControllerRepresentable {
-    @Binding var selectedImages: [UIImage]
+    @Binding var selectedImages: [(image: UIImage, annotation: String)]
     var isCamera: Bool
     
     func makeCoordinator() -> Coordinator {
@@ -136,9 +158,9 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate, TOCropViewControllerDelegate {
-        @Binding var selectedImages: [UIImage]
+        @Binding var selectedImages: [(image: UIImage, annotation: String)]
         
-        init(selectedImages: Binding<[UIImage]>) {
+        init(selectedImages: Binding<[(image: UIImage, annotation: String)]>) {
             _selectedImages = selectedImages
         }
         
@@ -154,7 +176,8 @@ struct ImagePicker: UIViewControllerRepresentable {
         
         // TOCropViewControllerでトリミングが終了した時の処理
         func cropViewController(_ controller: TOCropViewController, didCropTo croppedImage: UIImage, with cropRect: CGRect, angle: Int) {
-            selectedImages.append(croppedImage) // トリミングされた画像を追加
+            // トリミングされた画像に空の注釈をセット
+            self.selectedImages.append((image: croppedImage, annotation: ""))
             controller.dismiss(animated: true)
         }
         
