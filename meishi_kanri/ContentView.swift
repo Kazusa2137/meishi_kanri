@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import TOCropViewController
+import Vision
 
 struct ContentView: View {
     @State private var selectedImages: [(image: UIImage, annotation: String)] = [] // 画像と注釈を保持する配列
@@ -74,6 +75,7 @@ struct ImageDetailView: View {
     @Binding var imageData: (image: UIImage, annotation: String)
     var index: Int
     @State private var editedAnnotation: String
+    @State private var showAlert: Bool = false // アラートを表示するための状態
     
     init(imageData: Binding<(image: UIImage, annotation: String)>, index: Int) {
         self._imageData = imageData
@@ -91,7 +93,7 @@ struct ImageDetailView: View {
                 .navigationBarTitleDisplayMode(.inline)
             
             // テキストフィールドで注釈を編集
-            TextField("注釈を入力", text: $editedAnnotation)
+            TextField("情報を入力", text: $editedAnnotation)
                 .padding()
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
@@ -100,6 +102,7 @@ struct ImageDetailView: View {
             Button("保存") {
                 // 入力した注釈を保存
                 imageData.annotation = editedAnnotation
+                showAlert = true // 保存後にアラートを表示
             }
             .padding()
             .foregroundColor(.blue)
@@ -113,6 +116,43 @@ struct ImageDetailView: View {
                     .foregroundColor(.red)
                     .padding()
             }
+        }
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text("保存しました"), message: nil, dismissButton: .default(Text("OK")))
+        }
+        .onAppear {
+            // 画像からテキストを認識する
+            recognizeText(from: imageData.image)
+        }
+    }
+    
+    func recognizeText(from image: UIImage) {
+        // Visionのリクエストを使って画像内のテキストを認識する
+        let request = VNRecognizeTextRequest { request, error in
+            guard error == nil else {
+                print("テキスト認識エラー: \(String(describing: error))")
+                return
+            }
+            
+            // 認識されたテキストを処理
+            if let observations = request.results as? [VNRecognizedTextObservation] {
+                let recognizedText = observations.compactMap { $0.topCandidates(1).first?.string }.joined(separator: " ")
+                DispatchQueue.main.async {
+                    // 認識されたテキストを注釈フィールドに反映
+                    self.editedAnnotation = recognizedText
+                }
+            }
+        }
+        
+        // 日本語を指定してリクエストを作成
+        request.recognitionLanguages = ["ja-JP"]  // 日本語対応
+        
+        // リクエストを実行する
+        let handler = VNImageRequestHandler(cgImage: image.cgImage!, options: [:])
+        do {
+            try handler.perform([request])
+        } catch {
+            print("テキスト認識の実行エラー: \(error)")
         }
     }
     
