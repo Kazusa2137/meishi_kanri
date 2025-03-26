@@ -12,13 +12,27 @@ struct ContentView: View {
             // 選ばれた画像があれば表示
             ScrollView {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
-                    ForEach(selectedImages, id: \.self) { image in
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 150, height: 150)
-                            .cornerRadius(10)
-                            .padding(5)
+                    ForEach(selectedImages.indices, id: \.self) { index in
+                        ZStack {
+                            Image(uiImage: selectedImages[index])
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 150, height: 150)
+                                .cornerRadius(10)
+                                .padding(5)
+                            
+                            // 削除ボタン
+                            Button(action: {
+                                showDeleteConfirmation(index: index)
+                            }) {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                                    .padding(5)
+                                    .background(Color.white.opacity(0.7))
+                                    .clipShape(Circle())
+                                    .offset(x: 50, y: -50)
+                            }
+                        }
                     }
                 }
             }
@@ -60,6 +74,24 @@ struct ContentView: View {
             rootVC.present(actionSheet, animated: true, completion: nil)
         }
     }
+    
+    // 画像削除の確認ダイアログ
+    func showDeleteConfirmation(index: Int) {
+        let alertController = UIAlertController(title: "削除の確認", message: "本当にこの画像を削除しますか？", preferredStyle: .alert)
+        
+        // 削除アクション
+        alertController.addAction(UIAlertAction(title: "削除", style: .destructive, handler: { _ in
+            selectedImages.remove(at: index) // 画像を削除
+        }))
+        
+        // キャンセルアクション
+        alertController.addAction(UIAlertAction(title: "キャンセル", style: .cancel, handler: nil))
+        
+        // 現在のViewControllerでアラートを表示
+        if let rootVC = UIApplication.shared.windows.first?.rootViewController {
+            rootVC.present(alertController, animated: true, completion: nil)
+        }
+    }
 }
 
 struct ImagePicker: UIViewControllerRepresentable {
@@ -72,7 +104,14 @@ struct ImagePicker: UIViewControllerRepresentable {
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
-        picker.sourceType = isCamera ? .camera : .photoLibrary // カメラかフォトライブラリを選択
+        
+        // カメラかカメラロールを選択
+        if isCamera {
+            picker.sourceType = .camera // カメラ起動
+        } else {
+            picker.sourceType = .photoLibrary // カメラロール起動
+        }
+        
         picker.allowsEditing = false // 編集はTOCropViewControllerで行う
         picker.delegate = context.coordinator
         return picker
