@@ -5,7 +5,7 @@ import TOCropViewController
 struct ContentView: View {
     @State private var selectedImages: [UIImage] = [] // 複数の画像を保持する配列
     @State private var showImagePicker: Bool = false
-    @State private var isCamera: Bool = true // 初期設定をカメラにして、カメラを選択状態に
+    @State private var isCamera: Bool = true // カメラのみ有効にする
     
     var body: some View {
         VStack {
@@ -38,9 +38,9 @@ struct ContentView: View {
             }
             
             // 画像選択ボタン
-            Button("名刺を撮影または選択") {
-                // アクションシートを表示してカメラかカメラロールを選択
-                showImagePickerActionSheet()
+            Button("名刺を撮影") {
+                // カメラ起動
+                showImagePicker.toggle()
             }
             .padding()
             .sheet(isPresented: $showImagePicker) {
@@ -48,31 +48,6 @@ struct ContentView: View {
             }
         }
         .padding()
-    }
-    
-    // アクションシートを表示するメソッド
-    func showImagePickerActionSheet() {
-        let actionSheet = UIAlertController(title: "画像を選択", message: "カメラで撮影するか、カメラロールから選択してください", preferredStyle: .actionSheet)
-        
-        // カメラを起動するアクション
-        actionSheet.addAction(UIAlertAction(title: "カメラで撮影", style: .default, handler: { _ in
-            self.isCamera = true // カメラモードに設定
-            self.showImagePicker.toggle() // カメラ起動
-        }))
-        
-        // カメラロールを起動するアクション
-        actionSheet.addAction(UIAlertAction(title: "カメラロールから選択", style: .default, handler: { _ in
-            self.isCamera = false // カメラロールモードに設定
-            self.showImagePicker.toggle() // フォトライブラリ起動
-        }))
-        
-        // キャンセルアクション
-        actionSheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel, handler: nil))
-        
-        // 現在のViewControllerでアクションシートを表示
-        if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-            rootVC.present(actionSheet, animated: true, completion: nil)
-        }
     }
     
     // 画像削除の確認ダイアログ
@@ -105,13 +80,8 @@ struct ImagePicker: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         
-        // カメラかカメラロールを選択
-        if isCamera {
-            picker.sourceType = .camera // カメラ起動
-        } else {
-            picker.sourceType = .photoLibrary // カメラロール起動
-        }
-        
+        // カメラのみ選択
+        picker.sourceType = .camera
         picker.allowsEditing = false // 編集はTOCropViewControllerで行う
         picker.delegate = context.coordinator
         return picker
@@ -128,7 +98,7 @@ struct ImagePicker: UIViewControllerRepresentable {
             _selectedImages = selectedImages
         }
         
-        // 画像が選ばれた時の処理（撮影または選択後）
+        // 画像が選ばれた時の処理（撮影後）
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             if let selectedImage = info[.originalImage] as? UIImage {
                 // TOCropViewControllerでトリミング編集
