@@ -17,7 +17,7 @@ struct ContentView: View {
                         ForEach(selectedImages.indices, id: \.self) { index in
                             VStack {
                                 // 画像タップで拡大表示
-                                NavigationLink(destination: ImageDetailView(imageData: $selectedImages[index], index: index)) {
+                                NavigationLink(destination: ImageDetailView(imageData: $selectedImages[index], index: index, deleteImageAction: deleteImage)) {
                                     Image(uiImage: selectedImages[index].image)
                                         .resizable()
                                         .scaledToFit()
@@ -76,10 +76,12 @@ struct ImageDetailView: View {
     var index: Int
     @State private var editedAnnotation: String
     @State private var showAlert: Bool = false // アラートを表示するための状態
+    var deleteImageAction: (Int) -> Void  // 削除ボタンのアクション
     
-    init(imageData: Binding<(image: UIImage, annotation: String)>, index: Int) {
+    init(imageData: Binding<(image: UIImage, annotation: String)>, index: Int, deleteImageAction: @escaping (Int) -> Void) {
         self._imageData = imageData
         self.index = index
+        self.deleteImageAction = deleteImageAction
         _editedAnnotation = State(initialValue: imageData.wrappedValue.annotation)
     }
     
@@ -109,7 +111,8 @@ struct ImageDetailView: View {
             
             // 削除ボタン
             Button(action: {
-                deleteImage()
+                // 削除処理を呼び出す
+                deleteImageAction(index)
             }) {
                 Text("削除")
                     .font(.title2)
@@ -153,24 +156,6 @@ struct ImageDetailView: View {
             try handler.perform([request])
         } catch {
             print("テキスト認識の実行エラー: \(error)")
-        }
-    }
-    
-    func deleteImage() {
-        // 削除前に確認のアラートを表示
-        let alert = UIAlertController(title: "確認", message: "本当に削除しますか？", preferredStyle: .alert)
-        
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel, handler: nil))
-        alert.addAction(UIAlertAction(title: "削除", style: .destructive, handler: { _ in
-            // 削除処理
-            if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-                rootVC.present(alert, animated: true, completion: nil)
-            }
-        }))
-        
-        // アラートを表示
-        if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-            rootVC.present(alert, animated: true, completion: nil)
         }
     }
 }
