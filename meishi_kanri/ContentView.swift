@@ -14,14 +14,26 @@ struct ContentView: View {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
                         ForEach(selectedImages.indices, id: \.self) { index in
-                            // 画像タップで拡大表示
-                            NavigationLink(destination: ImageDetailView(image: selectedImages[index])) {
-                                Image(uiImage: selectedImages[index])
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 150, height: 150)
-                                    .cornerRadius(10)
-                                    .padding(5)
+                            VStack {
+                                // 画像タップで拡大表示
+                                NavigationLink(destination: ImageDetailView(image: selectedImages[index], index: index, selectedImages: $selectedImages)) {
+                                    Image(uiImage: selectedImages[index])
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 150, height: 150)
+                                        .cornerRadius(10)
+                                        .padding(5)
+                                }
+                                
+                                // 削除ボタン
+                                Button(action: {
+                                    deleteImage(at: index)
+                                }) {
+                                    Text("削除")
+                                        .font(.subheadline)
+                                        .foregroundColor(.red)
+                                        .padding(5)
+                                }
                             }
                         }
                     }
@@ -40,10 +52,28 @@ struct ContentView: View {
             .navigationTitle("名刺管理")
         }
     }
+    
+    func deleteImage(at index: Int) {
+        // 削除前に確認のアラートを表示
+        let alert = UIAlertController(title: "確認", message: "本当に削除しますか？", preferredStyle: .alert)
+        
+        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "削除", style: .destructive, handler: { _ in
+            // 削除処理
+            selectedImages.remove(at: index)
+        }))
+        
+        // アラートを表示
+        if let rootVC = UIApplication.shared.windows.first?.rootViewController {
+            rootVC.present(alert, animated: true, completion: nil)
+        }
+    }
 }
 
 struct ImageDetailView: View {
     var image: UIImage
+    var index: Int
+    @Binding var selectedImages: [UIImage]
     
     var body: some View {
         VStack {
@@ -53,6 +83,32 @@ struct ImageDetailView: View {
                 .padding()
                 .navigationTitle("拡大画像")
                 .navigationBarTitleDisplayMode(.inline)
+            
+            // 削除ボタン
+            Button(action: {
+                deleteImage()
+            }) {
+                Text("削除")
+                    .font(.title2)
+                    .foregroundColor(.red)
+                    .padding()
+            }
+        }
+    }
+    
+    func deleteImage() {
+        // 削除前に確認のアラートを表示
+        let alert = UIAlertController(title: "確認", message: "本当に削除しますか？", preferredStyle: .alert)
+        
+        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "削除", style: .destructive, handler: { _ in
+            // 削除処理
+            selectedImages.remove(at: index)
+        }))
+        
+        // アラートを表示
+        if let rootVC = UIApplication.shared.windows.first?.rootViewController {
+            rootVC.present(alert, animated: true, completion: nil)
         }
     }
 }
