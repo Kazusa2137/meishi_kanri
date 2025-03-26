@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		55438A5B2D93E5C2002D3248 /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 55438A5A2D93E5C2002D3248 /* CropViewController */; };
+		55438A5D2D93E5C2002D3248 /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 55438A5C2D93E5C2002D3248 /* TOCropViewController */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		55438A3B2D93CF26002D3248 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55438A5D2D93E5C2002D3248 /* TOCropViewController in Frameworks */,
+				55438A5B2D93E5C2002D3248 /* CropViewController in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,8 @@
 			);
 			name = meishi_kanri;
 			packageProductDependencies = (
+				55438A5A2D93E5C2002D3248 /* CropViewController */,
+				55438A5C2D93E5C2002D3248 /* TOCropViewController */,
 			);
 			productName = meishi_kanri;
 			productReference = 55438A2A2D93CF25002D3248 /* meishi_kanri.app */;
@@ -195,6 +204,9 @@
 			);
 			mainGroup = 55438A212D93CF25002D3248;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				55438A592D93E586002D3248 /* XCRemoteSwiftPackageReference "TOCropViewController" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 55438A2B2D93CF25002D3248 /* Products */;
 			projectDirPath = "";
@@ -396,8 +408,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"meishi_kanri/Preview Content\"";
+				DEVELOPMENT_TEAM = 2M7V6A8T9V;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "meishi-kanri-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -424,8 +438,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"meishi_kanri/Preview Content\"";
+				DEVELOPMENT_TEAM = 2M7V6A8T9V;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "meishi-kanri-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -552,6 +568,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		55438A592D93E586002D3248 /* XCRemoteSwiftPackageReference "TOCropViewController" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/TimOliver/TOCropViewController.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		55438A5A2D93E5C2002D3248 /* CropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 55438A592D93E586002D3248 /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = CropViewController;
+		};
+		55438A5C2D93E5C2002D3248 /* TOCropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 55438A592D93E586002D3248 /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = TOCropViewController;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 55438A222D93CF25002D3248 /* Project object */;
 }
