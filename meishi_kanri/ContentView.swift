@@ -8,63 +8,51 @@ struct ContentView: View {
     @State private var isCamera: Bool = true // カメラのみ有効にする
     
     var body: some View {
-        VStack {
-            // 選ばれた画像があれば表示
-            ScrollView {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
-                    ForEach(selectedImages.indices, id: \.self) { index in
-                        ZStack {
-                            Image(uiImage: selectedImages[index])
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 150, height: 150)
-                                .cornerRadius(10)
-                                .padding(5)
-                            
-                            // 削除ボタン
-                            Button(action: {
-                                showDeleteConfirmation(index: index)
-                            }) {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
+        NavigationView {
+            VStack {
+                // 選ばれた画像があれば表示
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
+                        ForEach(selectedImages.indices, id: \.self) { index in
+                            // 画像タップで拡大表示
+                            NavigationLink(destination: ImageDetailView(image: selectedImages[index])) {
+                                Image(uiImage: selectedImages[index])
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 150, height: 150)
+                                    .cornerRadius(10)
                                     .padding(5)
-                                    .background(Color.white.opacity(0.7))
-                                    .clipShape(Circle())
-                                    .offset(x: 50, y: -50)
                             }
                         }
                     }
                 }
+                
+                // 画像選択ボタン
+                Button("名刺を撮影") {
+                    // カメラ起動
+                    showImagePicker.toggle()
+                }
+                .padding()
+                .sheet(isPresented: $showImagePicker) {
+                    ImagePicker(selectedImages: $selectedImages, isCamera: isCamera)
+                }
             }
-            
-            // 画像選択ボタン
-            Button("名刺を撮影") {
-                // カメラ起動
-                showImagePicker.toggle()
-            }
-            .padding()
-            .sheet(isPresented: $showImagePicker) {
-                ImagePicker(selectedImages: $selectedImages, isCamera: isCamera)
-            }
+            .navigationTitle("名刺管理")
         }
-        .padding()
     }
+}
+
+struct ImageDetailView: View {
+    var image: UIImage
     
-    // 画像削除の確認ダイアログ
-    func showDeleteConfirmation(index: Int) {
-        let alertController = UIAlertController(title: "削除の確認", message: "本当にこの画像を削除しますか？", preferredStyle: .alert)
-        
-        // 削除アクション
-        alertController.addAction(UIAlertAction(title: "削除", style: .destructive, handler: { _ in
-            selectedImages.remove(at: index) // 画像を削除
-        }))
-        
-        // キャンセルアクション
-        alertController.addAction(UIAlertAction(title: "キャンセル", style: .cancel, handler: nil))
-        
-        // 現在のViewControllerでアラートを表示
-        if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-            rootVC.present(alertController, animated: true, completion: nil)
+    var body: some View {
+        VStack {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .padding()
+                .navigationTitle("拡大画像")
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
