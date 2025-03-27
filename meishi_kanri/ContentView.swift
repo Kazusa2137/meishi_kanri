@@ -45,6 +45,7 @@ struct ContentView: View {
     @State private var selectedImages: [(image: UIImage, annotation: String)] = [] // 画像と注釈を保持する配列
     @State private var showImagePicker: Bool = false
     @State private var isCamera: Bool = true // カメラのみ有効にする
+    @State private var isFrontImageCaptured: Bool = false // 表面の撮影が終わったかのフラグ
     
     var body: some View {
         NavigationView {
@@ -85,7 +86,7 @@ struct ContentView: View {
                 }
                 .padding()
                 .sheet(isPresented: $showImagePicker) {
-                    ImagePicker(selectedImages: $selectedImages, isCamera: isCamera)
+                    ImagePicker(selectedImages: $selectedImages, isCamera: isCamera, isFrontImageCaptured: $isFrontImageCaptured)
                 }
             }
             .navigationTitle("名刺管理")
@@ -211,9 +212,10 @@ struct ImageDetailView: View {
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var selectedImages: [(image: UIImage, annotation: String)]
     var isCamera: Bool
+    @Binding var isFrontImageCaptured: Bool
     
     func makeCoordinator() -> Coordinator {
-        return Coordinator(selectedImages: $selectedImages)
+        return Coordinator(selectedImages: $selectedImages, isFrontImageCaptured: $isFrontImageCaptured)
     }
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
@@ -232,9 +234,11 @@ struct ImagePicker: UIViewControllerRepresentable {
     
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate, TOCropViewControllerDelegate {
         @Binding var selectedImages: [(image: UIImage, annotation: String)]
+        @Binding var isFrontImageCaptured: Bool
         
-        init(selectedImages: Binding<[(image: UIImage, annotation: String)]>) {
+        init(selectedImages: Binding<[(image: UIImage, annotation: String)]>, isFrontImageCaptured: Binding<Bool>) {
             _selectedImages = selectedImages
+            _isFrontImageCaptured = isFrontImageCaptured
         }
         
         // 画像が選ばれた時の処理（撮影後）
@@ -249,8 +253,14 @@ struct ImagePicker: UIViewControllerRepresentable {
         
         // TOCropViewControllerでトリミングが終了した時の処理
         func cropViewController(_ controller: TOCropViewController, didCropTo croppedImage: UIImage, with cropRect: CGRect, angle: Int) {
-            // トリミングされた画像に空の注釈をセット
-            self.selectedImages.append((image: croppedImage, annotation: ""))
+            if isFrontImageCaptured {
+                // 裏面が撮影された場合
+                self.selectedImages.append((image: croppedImage, annotation: ""))
+            } else {
+                // 表面が撮影された場合
+                self.selectedImages.append((image: croppedImage, annotation: ""))
+                isFrontImageCaptured = true
+            }
             controller.dismiss(animated: true)
         }
         
