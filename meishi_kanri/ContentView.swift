@@ -2,6 +2,44 @@ import SwiftUI
 import UIKit
 import TOCropViewController
 import Vision
+import Foundation
+
+struct BusinessCardInfo {
+    var company: String?
+    var name: String?
+    var phoneNumber: String?
+    var email: String?
+}
+
+func extractBusinessCardInfo(from text: String) -> BusinessCardInfo {
+    var extractedInfo = BusinessCardInfo()
+    
+    let lines = text.components(separatedBy: "\n")
+    
+    // **最初の行を会社名として認識**
+    if let firstLine = lines.first {
+        extractedInfo.company = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    // **次の行を名前として認識**
+    if lines.count > 1 {
+        extractedInfo.name = lines[1].trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // **メールアドレスの正規表現**
+    let emailRegex = try! NSRegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: .caseInsensitive)
+    if let match = emailRegex.firstMatch(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count)) {
+        extractedInfo.email = (text as NSString).substring(with: match.range)
+    }
+
+    // **電話番号の正規表現（例: 080-1234-5678 や 03-1234-5678）**
+    let phoneRegex = try! NSRegularExpression(pattern: "\\d{2,4}-\\d{2,4}-\\d{4}", options: [])
+    if let match = phoneRegex.firstMatch(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count)) {
+        extractedInfo.phoneNumber = (text as NSString).substring(with: match.range)
+    }
+
+    return extractedInfo
+}
 
 struct ContentView: View {
     @State private var selectedImages: [(image: UIImage, annotation: String)] = [] // 画像と注釈を保持する配列
@@ -95,9 +133,10 @@ struct ImageDetailView: View {
                 .navigationBarTitleDisplayMode(.inline)
             
             // テキストフィールドで注釈を編集
-            TextField("情報を入力", text: $editedAnnotation)
+            TextEditor(text: $editedAnnotation)  // TextFieldからTextEditorに変更
                 .padding()
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .frame(height: 200)
+                .border(Color.gray, width: 1)
                 .padding(.horizontal)
             
             // 保存ボタン
@@ -139,16 +178,25 @@ struct ImageDetailView: View {
             
             // 認識されたテキストを処理
             if let observations = request.results as? [VNRecognizedTextObservation] {
-                let recognizedText = observations.compactMap { $0.topCandidates(1).first?.string }.joined(separator: " ")
+                let recognizedText = observations.compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
+                
                 DispatchQueue.main.async {
-                    // 認識されたテキストを注釈フィールドに反映
-                    self.editedAnnotation = recognizedText
+                    // 🔹 名刺情報を抽出
+                    let extractedInfo = extractBusinessCardInfo(from: recognizedText)
+                    
+                    // 🔹 不明の時のデフォルト値を適用し、改行を追加
+                    self.editedAnnotation = """
+                    会社（職業）: \(extractedInfo.company ?? "不明")
+                    名前: \(extractedInfo.name ?? "不明")
+                    電話: \(extractedInfo.phoneNumber ?? "不明")
+                    メール: \(extractedInfo.email ?? "不明")
+                    """
                 }
             }
         }
         
         // 日本語を指定してリクエストを作成
-        request.recognitionLanguages = ["ja-JP"]  // 日本語対応
+        request.recognitionLanguages = ["ja-JP", "en-US"]  // 日本語対応
         
         // リクエストを実行する
         let handler = VNImageRequestHandler(cgImage: image.cgImage!, options: [:])
