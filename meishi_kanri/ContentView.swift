@@ -16,14 +16,14 @@ func extractBusinessCardInfo(from text: String) -> BusinessCardInfo {
     
     let lines = text.components(separatedBy: "\n")
     
-    // **最初の行を会社名として認識**
-    if let firstLine = lines.first {
-        extractedInfo.company = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    
-    // **次の行を名前として認識**
+    // **最初の行名前として認識**
     if lines.count > 1 {
         extractedInfo.name = lines[1].trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    // **次の行を会社名として認識**
+    if let firstLine = lines.first {
+        extractedInfo.company = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     // **メールアドレスの正規表現**
@@ -64,6 +64,12 @@ struct ContentView: View {
                                         .cornerRadius(10)
                                         .padding(5)
                                 }
+                                
+                                // **題名（会社名や名前）を表示**
+                                Text(selectedImages[index].annotation.isEmpty ? "未処理" : selectedImages[index].annotation)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                    .padding(.top, 5)
                                 
                                 // 削除ボタン
                                 Button(action: {
@@ -187,11 +193,14 @@ struct ImageDetailView: View {
                     
                     // 🔹 不明の時のデフォルト値を適用し、改行を追加
                     self.editedAnnotation = """
-                    会社（職業）: \(extractedInfo.company ?? "不明")
                     名前: \(extractedInfo.name ?? "不明")
+                    会社（職業）: \(extractedInfo.company ?? "不明")
                     電話: \(extractedInfo.phoneNumber ?? "不明")
                     メール: \(extractedInfo.email ?? "不明")
                     """
+                    
+                    // 🔹 一覧にも題名を設定
+                    self.imageData.annotation = extractedInfo.name ?? "未処理"
                 }
             }
         }
